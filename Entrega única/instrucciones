@@ -1,0 +1,4 @@
+ejecutar la consulaPrincipal()
+para tomar el rol de administrador, ingresar con login:admin, contraseña:admin
+es importante saber que los tests se corren por separado, si se corre todo el paquete junto
+existiran problemas por valores estáticos y se generaran errores.
