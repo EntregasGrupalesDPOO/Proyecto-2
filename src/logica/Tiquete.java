@@ -18,6 +18,8 @@ public abstract class Tiquete implements Serializable {
 	protected boolean transferible;
 	protected Cliente cliente;
 	protected static int tiquetesMaximosPorTransaccion=10;
+	protected boolean impreso = false;
+    protected LocalDate fechaImpresion;
 	
 	public Tiquete(double precioBase, double cargoPorServicio, LocalDate fecha,
 			LocalTime hora) {
@@ -95,4 +97,19 @@ public abstract class Tiquete implements Serializable {
 	public static void setTiquetesMaximosPorTransaccion(int tiquetesMaximosPorTransaccion) {
 		Tiquete.tiquetesMaximosPorTransaccion = tiquetesMaximosPorTransaccion;
 	}
+	public boolean isImpreso() {
+        return impreso;
+    }
+
+    public LocalDate getFechaImpresion() {
+        return fechaImpresion;
+    }
+
+    public void marcarComoImpreso() {
+        if (!this.impreso) {
+            this.impreso = true;
+            this.fechaImpresion = LocalDate.now();
+            this.transferible = false; 
+        }
+    }
 }
