@@ -73,18 +73,25 @@ public class VentanaPrincipal extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Inicialización del sistema
+        // 1. Inicialización del sistema
         BoletasMaster sistema = new BoletasMaster();
         
-        // Cargar los datos existentes (si ya ejecutó la consola anteriormente)
+        // 2. Intentar cargar datos existentes
         sistema.leerAdministrador();
         sistema.leerClientes();
         sistema.leerOrganizadores();
         sistema.leerEventos();
         sistema.leerTiquetes();
         sistema.leerVenues();
+        sistema.leerMarketplace(); 
 
-        // Iniciar la interfaz
+        // Si después de cargar, no hay administrador (porque borraste los archivos), creamos uno.
+        if (sistema.getAdministrador() == null) {
+            sistema.agregarAdministrador("admin", "admin");
+            
+        }
+        // -------------------------------------------------------------
+
         SwingUtilities.invokeLater(() -> new VentanaPrincipal(sistema));
     }
     
@@ -101,7 +108,6 @@ public class VentanaPrincipal extends JFrame {
         setTitle("BoletaMaster - Organizador: " + sistema.getUsuarioActual().getLogin());
     }
     
-    // Reemplace el método mostrarMenuCliente para mantener la coherencia
     public void mostrarPanelCliente() {
         panelContenedor.add(new PanelCliente(this), "CLIENTE");
         cardLayout.show(panelContenedor, "CLIENTE");

@@ -454,22 +454,18 @@ public void imprimirGananciasPorTodasLasFechas() {
 	// MÉTODOS MARKETPLACE
 		//quisas crear otras exceptiones para marketPlace
 
-		public void publicarOferta(Tiquete tiquete, String descripcion, double precio) {
-		    if (!(usuarioActual instanceof Cliente)) {
-		        System.out.println("Solo los clientes pueden publicar ofertas.");
-		        return;
-		    }
+    public void publicarOferta(Tiquete tiquete, String descripcion, double precio) throws Exception {
+        if (!(usuarioActual instanceof Cliente)) {
+            throw new Exception("Solo los clientes pueden publicar ofertas.");
+        }
 
-		        Cliente vendedor = (Cliente) usuarioActual;
-		        Oferta nueva;
-				try {
-					nueva = new Oferta(tiquete, vendedor, descripcion, precio);
-					marketPlace.publicarOferta(nueva);
-				} catch (TiqueteNoTransferibleException e) {
-					e.printStackTrace();
-				}
-		        
-		}
+        Cliente vendedor = (Cliente) usuarioActual;
+        
+        Oferta nueva = new Oferta(tiquete, vendedor, descripcion, precio);
+        
+        marketPlace.publicarOferta(nueva);
+        System.out.println("Oferta publicada con éxito: " + descripcion);
+    }
 
 		public void eliminarOferta(Oferta oferta) {
 		    if (!(usuarioActual instanceof Cliente)) {

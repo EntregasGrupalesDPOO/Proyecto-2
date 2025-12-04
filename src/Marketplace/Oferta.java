@@ -1,14 +1,14 @@
 package Marketplace;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-import Exepciones.SaldoInsuficienteException;
 import Exepciones.TiqueteNoTransferibleException;
 import logica.Tiquete;
-import logica.TiqueteMultiple;
 import logica.Cliente;
 
-public class Oferta {
+public class Oferta implements Serializable {
+    private static final long serialVersionUID = 1L; 
 
     private Tiquete tiquete;
     private Cliente vendedor;
@@ -16,6 +16,7 @@ public class Oferta {
     private double precio;
     private boolean vendida;
     private ArrayList<ContraOferta> contraOfertas;
+
 
     public Oferta(Tiquete tiquete, Cliente vendedor, String descripcion, double precio) throws TiqueteNoTransferibleException {
         if (!tiquete.isTransferible()) {

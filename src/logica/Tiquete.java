@@ -78,6 +78,11 @@ public abstract class Tiquete implements Serializable {
 		return fecha;
 	}
 	
+	public LocalTime getHora() {
+		return hora;
+	}
+	
+	
 	public static void setImpresion(double valor) {
 		impresion = valor;
 	}

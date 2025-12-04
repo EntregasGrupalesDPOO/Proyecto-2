@@ -1,15 +1,19 @@
 package Marketplace;
 
+import java.io.Serializable;
 import Exepciones.SaldoInsuficienteException;
 import logica.Cliente;
-import logica.Tiquete;
 
-public class ContraOferta {
+public class ContraOferta implements Serializable { 
+
+    private static final long serialVersionUID = 1L;
+
     private Cliente comprador;       
     private Oferta ofertaOriginal;     
     private double nuevoPrecio;
     private boolean aceptada;
     private boolean usarSaldo;
+
 
     public ContraOferta(Cliente comprador, Oferta ofertaOriginal, double nuevoPrecio,boolean usarSaldo) {
         this.comprador = comprador;
