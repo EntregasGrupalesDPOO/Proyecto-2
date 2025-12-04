@@ -15,28 +15,28 @@ public class PanelCliente extends JPanel {
         this.ventana = ventana;
         setLayout(new BorderLayout());
 
-        // 1. En-tête
+        // 1. Encabezado
         JPanel panelTop = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelTop.add(new JLabel("Mis Tiquetes Comprados:"));
         add(panelTop, BorderLayout.NORTH);
 
-        // 2. Liste des billets
+        // 2. Lista de los billetes
         modeloLista = new DefaultListModel<>();
-        cargarTiquetes(); // Charger les données initiales
+        cargarTiquetes(); // Cargar los datos iniciales
         listaTiquetes = new JList<>(modeloLista);
         
-        // Affichage personnalisé dans la liste (ID + Evento + Statut)
+        // Visualización personalizada en la lista (ID + Evento + Estado)
         listaTiquetes.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Tiquete) {
                     Tiquete t = (Tiquete) value;
-                    // On essaie d'afficher la date, l'ID et si c'est imprimé
+                    // Intentamos mostrar la fecha, el ID y si está impreso
                     String info = "ID: " + t.getId() + " - Fecha: " + t.getFecha();
                     if (t.isImpreso()) {
                         info += " [YA IMPRESO - BLOQUEADO]";
-                        setForeground(Color.GRAY); // Griser les billets imprimés
+                        setForeground(Color.GRAY); // Poner en gris los billetes impresos
                     } else {
                         setForeground(Color.BLACK);
                     }
@@ -48,35 +48,39 @@ public class PanelCliente extends JPanel {
 
         add(new JScrollPane(listaTiquetes), BorderLayout.CENTER);
 
-        // 3. Boutons (C'est ici que tu avais l'erreur)
+        // 3. Botones (Es aquí donde tenías el error)
         JPanel panelBotones = new JPanel();
         
-        // --- DÉCLARATION DES BOUTONS ---
-        JButton btnComprar = new JButton("Comprar Nuevo Tiquete"); // Le bouton manquant
+        // --- DECLARACIÓN DE LOS BOTONES ---
+        JButton btnComprar = new JButton("Comprar Nuevo Tiquete"); // El botón faltante
         JButton btnImprimir = new JButton("Imprimir Tiquete Seleccionado");
         JButton btnLogout = new JButton("Cerrar Sesión");
 
-        // --- AJOUT AU PANEL ---
-        panelBotones.add(btnComprar); // Maintenant ça marche car btnComprar existe juste au-dessus
+        // --- ADICIÓN AL PANEL ---
+        panelBotones.add(btnComprar); // Ahora funciona porque btnComprar existe justo arriba
         panelBotones.add(btnImprimir);
         panelBotones.add(btnLogout);
         
         add(panelBotones, BorderLayout.SOUTH);
 
-        // 4. Actions (Listeners)
+        // 4. Acciones (Listeners)
         
-        // Action Déconnexion
+        // Acción Desconexión
         btnLogout.addActionListener(e -> ventana.cerrarSesion());
         
-        // Action Acheter (Ouvre le dialogue d'achat)
+        // Acción Comprar (Abre el diálogo de compra)
         btnComprar.addActionListener(e -> {
+            // Nota: DialogoCompra debe estar definido en el package 'interfaz'
+            // Nota: PanelImpresion debe estar definido en el package 'interfaz'
+            // Las clases PanelImpresion y DialogoCompra deben estar disponibles en el package 'interfaz'
+            // La clase PanelImpresion debe estar disponible en el package 'interfaz'
             DialogoCompra dialogo = new DialogoCompra(ventana, ventana.getSistema());
             dialogo.setVisible(true);
-            // Une fois l'achat fini (fenêtre fermée), on recharge la liste pour voir le nouveau billet
+            // Una vez que la compra termina (ventana cerrada), recargamos la lista para ver el nuevo billete
             cargarTiquetes();
         });
         
-        // Action Imprimer
+        // Acción Imprimir
         btnImprimir.addActionListener(e -> {
             Tiquete seleccionado = listaTiquetes.getSelectedValue();
             if (seleccionado == null) {
@@ -87,7 +91,7 @@ public class PanelCliente extends JPanel {
         });
     }
 
-    // Charge les billets depuis le modèle vers la liste graphique
+    // Carga los billetes desde el modelo hacia la lista gráfica
     private void cargarTiquetes() {
         modeloLista.clear();
         Cliente cliente = (Cliente) ventana.getSistema().getUsuarioActual();
@@ -101,26 +105,26 @@ public class PanelCliente extends JPanel {
     }
 
     private void imprimirTiquete(Tiquete t) {
-        // Règle métier : Bloquer si déjà imprimé
+        // Regla de negocio: Bloquear si ya está impreso
         if (t.isImpreso()) {
             JOptionPane.showMessageDialog(this, "Este tiquete YA fue impreso y no se puede reimprimir ni transferir.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Marquer comme imprimé dans le modèle (Logique)
+        // Marcar como impreso en el modelo (Lógica)
         t.marcarComoImpreso();
         
-        // Sauvegarder (Simulation de persistance)
-        // ventana.getSistema().escribirTiquetes(); // Décommenter si la persistance est active
+        // Guardar (Simulación de persistencia)
+        // ventana.getSistema().escribirTiquetes(); // Descomentar si la persistencia está activa
 
-        // Ouvrir la fenêtre d'impression Java2D (Le vrai rendu visuel)
+        // Abrir la ventana de impresión Java2D (El verdadero renderizado visual)
         JDialog dialogoImpresion = new JDialog(ventana, "Visualización de Tiquete", true);
         dialogoImpresion.setSize(650, 300);
         dialogoImpresion.setLocationRelativeTo(this);
-        dialogoImpresion.add(new PanelImpresion(t)); // Utilise la classe PanelImpresion qu'on a créée
+        dialogoImpresion.add(new PanelImpresion(t)); // Utiliza la clase PanelImpresion que creamos
         dialogoImpresion.setVisible(true);
         
-        // Rafraîchir l'affichage pour montrer que le billet est maintenant "BLOQUEADO"
+        // Refrescar la visualización para mostrar que el billete está ahora "BLOQUEADO"
         listaTiquetes.repaint();
     }
 }

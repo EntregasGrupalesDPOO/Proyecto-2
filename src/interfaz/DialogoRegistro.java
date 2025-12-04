@@ -21,14 +21,14 @@ public class DialogoRegistro extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Titre
+        // Título
         JLabel lblTitulo = new JLabel("Crear Cuenta Nueva");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 14));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         add(lblTitulo, gbc);
 
-        // Choix du rôle (Uniquement Client ou Organisateur, pas Admin)
+        // Elección del rol (Únicamente Cliente u Organizador, no Admin)
         gbc.gridwidth = 1; gbc.gridy = 1;
         add(new JLabel("Tipo de Usuario:"), gbc);
         
@@ -36,7 +36,7 @@ public class DialogoRegistro extends JDialog {
         gbc.gridx = 1;
         add(comboRol, gbc);
 
-        // Champs Utilisateur
+        // Campos Usuario
         gbc.gridx = 0; gbc.gridy = 2;
         add(new JLabel("Nuevo Usuario:"), gbc);
         
@@ -44,7 +44,7 @@ public class DialogoRegistro extends JDialog {
         gbc.gridx = 1;
         add(txtUser, gbc);
 
-        // Champs Mot de passe
+        // Campos Contraseña
         gbc.gridx = 0; gbc.gridy = 3;
         add(new JLabel("Nueva Contraseña:"), gbc);
         
@@ -52,16 +52,16 @@ public class DialogoRegistro extends JDialog {
         gbc.gridx = 1;
         add(txtPass, gbc);
 
-        // Bouton de confirmation
+        // Botón de confirmación
         JButton btnRegistrar = new JButton("Crear Cuenta");
-        btnRegistrar.setBackground(new Color(40, 180, 100)); // Vert
+        btnRegistrar.setBackground(new Color(40, 180, 100)); // Verde
         btnRegistrar.setForeground(Color.WHITE);
         
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
         gbc.insets = new Insets(15, 5, 5, 5);
         add(btnRegistrar, gbc);
 
-        // Action du bouton
+        // Acción del botón
         btnRegistrar.addActionListener(e -> registrarUsuario());
     }
 
@@ -75,7 +75,7 @@ public class DialogoRegistro extends JDialog {
             return;
         }
 
-        // Vérification si l'utilisateur existe déjà (Simplifié)
+        // Verificación si el usuario ya existe (Simplificado)
         if (sistema.getClientes().containsKey(user) || sistema.getOrganizadores().containsKey(user)) {
             JOptionPane.showMessageDialog(this, "El usuario '" + user + "' ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -89,7 +89,7 @@ public class DialogoRegistro extends JDialog {
                 sistema.agregarOrganizador(user, pass);
                 JOptionPane.showMessageDialog(this, "¡Organizador registrado con éxito!");
             }
-            dispose(); // Fermer la fenêtre après succès
+            dispose(); // Cerrar la ventana después del éxito
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al registrar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }

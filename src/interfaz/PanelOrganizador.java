@@ -18,23 +18,24 @@ public class PanelOrganizador extends JPanel {
         this.ventana = ventana;
         setLayout(new BorderLayout());
         
-        // En-tête
+        // Encabezado
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(new JLabel("Panel de Organizador - Mis Eventos"));
         add(topPanel, BorderLayout.NORTH);
 
-        // Liste des événements
+        // Lista de los eventos
         modeloLista = new DefaultListModel<>();
         cargarEventos();
         listaEventosPropios = new JList<>(modeloLista);
         
-        // Affichage personnalisé
+        // Visualización personalizada
         listaEventosPropios.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Evento) {
                     Evento ev = (Evento) value;
+                    // Muestra Nombre, Fecha, Hora y Estado
                     setText(ev.getNombre() + " (" + ev.getFecha() + " " + ev.getHora() + ") - " + ev.getEstado());
                 }
                 return this;
@@ -42,7 +43,7 @@ public class PanelOrganizador extends JPanel {
         });
         add(new JScrollPane(listaEventosPropios), BorderLayout.CENTER);
 
-        // --- BOUTONS ---
+        // --- BOTONES ---
         JPanel panelBotones = new JPanel(new GridLayout(2, 3, 5, 5));
         
         JButton btnCrearEvento = new JButton("Crear Evento");
@@ -61,7 +62,7 @@ public class PanelOrganizador extends JPanel {
         
         add(panelBotones, BorderLayout.SOUTH);
 
-        // --- ACTIONS ---
+        // --- ACCIONES ---
         btnLogout.addActionListener(e -> ventana.cerrarSesion());
         btnComprar.addActionListener(e -> new DialogoCompra(ventana, ventana.getSistema()).setVisible(true));
         btnCrearEvento.addActionListener(e -> crearEvento());
@@ -80,14 +81,14 @@ public class PanelOrganizador extends JPanel {
         }
     }
 
-    // --- MODIFICATION ICI : Ajout des champs Date et Heure ---
+    // --- MODIFICACIÓN AQUÍ: Adición de campos Fecha y Hora ---
     private void crearEvento() {
         if (ventana.getSistema().getVenues().isEmpty()) {
             JOptionPane.showMessageDialog(this, "No hay Venues disponibles.\nProponga uno nuevo y espere a que el Admin lo apruebe.");
             return;
         }
         
-        // Sélection du Venue
+        // Selección del Venue
         JComboBox<Venue> comboVenues = new JComboBox<>();
         for (Venue v : ventana.getSistema().getVenues()) {
             comboVenues.addItem(v);
@@ -101,11 +102,11 @@ public class PanelOrganizador extends JPanel {
             }
         });
 
-        // Champs de saisie
+        // Campos de entrada
         JTextField txtNombre = new JTextField();
         JTextField txtDescripcion = new JTextField();
         JTextField txtTipo = new JTextField("MUSICAL");
-        // Pré-remplir avec la date de demain pour aider l'utilisateur
+        // Prellenar con la fecha de mañana para ayudar al usuario
         JTextField txtFecha = new JTextField(LocalDate.now().plusDays(1).toString()); 
         JTextField txtHora = new JTextField("20:00");
         
@@ -129,7 +130,7 @@ public class PanelOrganizador extends JPanel {
             String horaStr = txtHora.getText();
             
             try {
-                // Conversion des textes en objets Date/Heure
+                // Conversión de los textos a objetos Date/Hora
                 LocalDate fecha = LocalDate.parse(fechaStr);
                 LocalTime hora = LocalTime.parse(horaStr);
 
@@ -137,7 +138,7 @@ public class PanelOrganizador extends JPanel {
                         (Organizador)ventana.getSistema().getUsuarioActual(), 
                         tipo, fecha, hora);
                 
-                JOptionPane.showMessageDialog(this, "Evento Creado Exitosamente!");
+                JOptionPane.showMessageDialog(this, "¡Evento Creado Exitosamente!");
                 cargarEventos();
                 
             } catch (DateTimeParseException dtpe) {
@@ -205,8 +206,9 @@ public class PanelOrganizador extends JPanel {
                 double precio = Double.parseDouble(txtPrecio.getText());
                 int cap = Integer.parseInt(txtCapacidad.getText());
                 
+                // Asume tipo de tiquete "BASICO"
                 ventana.getSistema().crearLocalidadEvento(nombreLoc, cap, precio, "BASICO", evento);
-                JOptionPane.showMessageDialog(this, "Localidad creada!");
+                JOptionPane.showMessageDialog(this, "¡Localidad creada!");
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error (Verifique números): " + ex.getMessage());
             }

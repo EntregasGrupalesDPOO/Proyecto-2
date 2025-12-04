@@ -17,17 +17,17 @@ public class VentanaPrincipal extends JFrame {
         setSize(900, 600);
         setLocationRelativeTo(null);
 
-
+        // En lugar de cerrar abruptamente (EXIT_ON_CLOSE), interceptamos el cierre
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
+        // Agregamos un listener que guardará los datos antes de salir
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                guardarDatos();
-                System.exit(0);
+                guardarDatos(); // Guarda todo
+                System.exit(0); // Cierra la aplicación
             }
         });
-        // ------------------------
 
         cardLayout = new CardLayout();
         panelContenedor = new JPanel(cardLayout);
@@ -37,7 +37,7 @@ public class VentanaPrincipal extends JFrame {
         setVisible(true);
     }
 
-    // Ajoutez cette méthode à la fin de la classe
+    // Agregue este método al final de la clase
     private void guardarDatos() {
         try {
             System.out.println("Guardando datos...");
@@ -59,9 +59,9 @@ public class VentanaPrincipal extends JFrame {
         return sistema;
     }
     
-    // Méthode appelée après une connexion réussie
+    // Método llamado después de un inicio de sesión exitoso
     public void mostrarMenuCliente() {
-        // On recrée le panel pour qu'il se mette à jour avec le client connecté
+        // Recreamos el panel para que se actualice con el cliente conectado
         panelContenedor.add(new PanelCliente(this), "CLIENTE");
         cardLayout.show(panelContenedor, "CLIENTE");
         setTitle("BoletaMaster - Menú Cliente: " + sistema.getUsuarioActual().getLogin());
@@ -73,10 +73,10 @@ public class VentanaPrincipal extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Initialisation du système
+        // Inicialización del sistema
         BoletasMaster sistema = new BoletasMaster();
         
-        // Charger les données existantes (si tu as déjà exécuté la console)
+        // Cargar los datos existentes (si ya ejecutó la consola anteriormente)
         sistema.leerAdministrador();
         sistema.leerClientes();
         sistema.leerOrganizadores();
@@ -84,11 +84,10 @@ public class VentanaPrincipal extends JFrame {
         sistema.leerTiquetes();
         sistema.leerVenues();
 
-        // Lancer l'interface
+        // Iniciar la interfaz
         SwingUtilities.invokeLater(() -> new VentanaPrincipal(sistema));
     }
     
- // ... code existant ...
 
     public void mostrarPanelAdmin() {
         panelContenedor.add(new PanelAdmin(this), "ADMIN");
@@ -102,12 +101,11 @@ public class VentanaPrincipal extends JFrame {
         setTitle("BoletaMaster - Organizador: " + sistema.getUsuarioActual().getLogin());
     }
     
-    // Remplacez la méthode montrerMenuCliente pour être cohérent
+    // Reemplace el método mostrarMenuCliente para mantener la coherencia
     public void mostrarPanelCliente() {
         panelContenedor.add(new PanelCliente(this), "CLIENTE");
         cardLayout.show(panelContenedor, "CLIENTE");
         setTitle("BoletaMaster - Cliente: " + sistema.getUsuarioActual().getLogin());
     }
 
-    // ... reste du code ...
 }

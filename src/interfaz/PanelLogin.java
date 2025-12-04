@@ -18,7 +18,7 @@ public class PanelLogin extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Titre
+        // Título
         JLabel lblTitulo = new JLabel("Bienvenido a BoletaMaster");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
@@ -26,10 +26,10 @@ public class PanelLogin extends JPanel {
         gbc.insets = new Insets(10, 5, 20, 5);
         add(lblTitulo, gbc);
 
-        // Reset insets
+        // Reiniciar insets
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // Sélection du Rôle
+        // Selección del Rol
         gbc.gridwidth = 1; gbc.gridy = 1;
         add(new JLabel("Rol:"), gbc);
         comboRol = new JComboBox<>(new String[]{"Cliente", "Organizador", "Administrador"});
@@ -50,16 +50,16 @@ public class PanelLogin extends JPanel {
         gbc.gridx = 1;
         add(txtPass, gbc);
 
-        // --- PANNEAU DE BOUTONS ---
+        // --- PANEL DE BOTONES ---
         JPanel panelBotones = new JPanel(new GridLayout(1, 2, 10, 0));
-        panelBotones.setOpaque(false); // Transparent pour garder le gris du fond
+        panelBotones.setOpaque(false); // Transparente para mantener el color de fondo
 
         JButton btnLogin = new JButton("Iniciar Sesión");
         btnLogin.setBackground(new Color(50, 150, 250));
         btnLogin.setForeground(Color.WHITE);
 
         JButton btnRegistro = new JButton("Registrarse");
-        btnRegistro.setBackground(new Color(100, 100, 100)); // Gris foncé
+        btnRegistro.setBackground(new Color(100, 100, 100)); // Gris oscuro
         btnRegistro.setForeground(Color.WHITE);
 
         panelBotones.add(btnLogin);
@@ -69,11 +69,11 @@ public class PanelLogin extends JPanel {
         gbc.insets = new Insets(20, 5, 5, 5);
         add(panelBotones, gbc);
 
-        // --- ACTIONS ---
+
         btnLogin.addActionListener(e -> intentarLogin());
         
         btnRegistro.addActionListener(e -> {
-            // Ouvrir la fenêtre d'inscription
+            // Abrir la ventana de registro
             DialogoRegistro dialogo = new DialogoRegistro(ventana, ventana.getSistema());
             dialogo.setVisible(true);
         });
@@ -99,7 +99,7 @@ public class PanelLogin extends JPanel {
                     ventana.mostrarPanelAdmin();
                     break;
             }
-            // Feedback visuel simple
+            // Retroalimentación visual simple
             // JOptionPane.showMessageDialog(this, "Bienvenido " + user); 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error de acceso: " + ex.getMessage(), "Login Fallido", JOptionPane.ERROR_MESSAGE);
