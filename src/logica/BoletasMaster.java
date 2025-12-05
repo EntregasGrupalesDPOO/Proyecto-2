@@ -642,14 +642,18 @@ public void imprimirGananciasPorTodasLasFechas() {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void leerClientes() {
-	    Object obj = archivoSerializable.leer("./datos/clientes.ser");
-	    if (obj != null) {
-	        this.clientes = (HashMap<String, Cliente>) obj;
-	    } else {
-	        this.clientes = new HashMap<>();
-	    }
-	}
+    public void leerClientes() {
+        Object obj = archivoSerializable.leer("./datos/clientes.ser");
+        if (obj != null) {
+            this.clientes = (HashMap<String, Cliente>) obj;
+            
+            Cliente.clientes = this.clientes; 
+            
+        } else {
+            this.clientes = new HashMap<>();
+            Cliente.clientes = new HashMap<>();
+        }
+    }
 
 	// === ORGANIZADORES ===
 	public void escribirOrganizadores() {

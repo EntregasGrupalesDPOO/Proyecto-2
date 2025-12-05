@@ -2,25 +2,25 @@ package interfaz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import Marketplace.ContraOferta;
 import Marketplace.Oferta;
-import logica.Cliente;
+import logica.*; 
 
 public class PanelMisVentas extends JPanel {
     private VentanaPrincipal ventana;
     private JList<String> listaGestion;
     private DefaultListModel<String> modeloLista;
-    // Guardamos referencias para procesar acciones
     private java.util.List<ContraOferta> contraOfertasVisibles;
 
     public PanelMisVentas(VentanaPrincipal ventana) {
         this.ventana = ventana;
         setLayout(new BorderLayout());
         setBackground(Estilos.COLOR_FONDO);
-        contraOfertasVisibles = new java.util.ArrayList<>();
+        contraOfertasVisibles = new ArrayList<>();
 
         // Título
-        JLabel lblTitulo = new JLabel("Gestión de Mis Ventas");
+        JLabel lblTitulo = new JLabel("Gestión de Mis Ventas Activas");
         lblTitulo.setFont(Estilos.FUENTE_TITULO);
         lblTitulo.setForeground(Estilos.COLOR_PRIMARIO);
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -29,7 +29,7 @@ public class PanelMisVentas extends JPanel {
         // Lista
         modeloLista = new DefaultListModel<>();
         listaGestion = new JList<>(modeloLista);
-        listaGestion.setFont(Estilos.FUENTE_NORMAL);
+        listaGestion.setFont(new Font("Monospaced", Font.PLAIN, 12)); // Monospaced pour mieux aligner
         add(new JScrollPane(listaGestion), BorderLayout.CENTER);
 
         // Botones
@@ -58,25 +58,55 @@ public class PanelMisVentas extends JPanel {
         cargarDatos();
     }
 
+
+    private String buscarInfoEvento(Tiquete tiqueteBuscado) {
+        BoletasMaster sistema = ventana.getSistema();
+        for (Evento e : sistema.getEventos()) {
+            for (Localidad l : e.getLocalidades()) {
+                for (Tiquete t : l.getTiquetes()) {
+                    if (t.getId() == tiqueteBuscado.getId()) {
+                        return e.getNombre() + " (" + l.getNombre() + ")";
+                    }
+                }
+            }
+        }
+        return "Evento Desconocido";
+    }
+
     private void cargarDatos() {
         modeloLista.clear();
         contraOfertasVisibles.clear();
         Cliente yo = (Cliente) ventana.getSistema().getUsuarioActual();
 
-        // Buscamos en todas las ofertas del sistema cuáles son mías
         for (Oferta o : ventana.getSistema().verOfertas()) {
             if (o.getVendedor().equals(yo) && !o.isVendida()) {
-                modeloLista.addElement("--- MI VENTA: " + o.getDescripcion() + " ($" + o.getPrecio() + ") ---");
-                contraOfertasVisibles.add(null); // Espaciador (no es clickable)
+                
+                Tiquete t = o.getTiquete();
+                String infoEvento = buscarInfoEvento(t); 
+                int idTiquete = t.getId();
 
-                // Buscamos contraofertas para esta venta
+                String lineaVenta = String.format("VENTA: %s [ID Tiquete: %d] - Precio: $%.2f", 
+                                                  infoEvento, idTiquete, o.getPrecio());
+                
+                modeloLista.addElement(lineaVenta);
+                contraOfertasVisibles.add(null); 
+
                 for (ContraOferta co : o.getContraOfertas()) {
                     if (!co.isAceptada()) {
-                        modeloLista.addElement("   [OFERTA RECIBIDA] De: " + co.getComprador() + " - Ofrece: $" + co.getNuevoPrecio());
-                        contraOfertasVisibles.add(co); // Guardamos la referencia
+                        String lineaOferta = String.format("   └── [OFERTA] De: %s - Ofrece: $%.2f", 
+                                                           co.getComprador(), co.getNuevoPrecio());
+                        modeloLista.addElement(lineaOferta);
+                        contraOfertasVisibles.add(co); 
                     }
                 }
+
+                modeloLista.addElement(" ");
+                contraOfertasVisibles.add(null);
             }
+        }
+        
+        if (modeloLista.isEmpty()) {
+            modeloLista.addElement("No tienes ventas activas.");
         }
     }
 
@@ -87,21 +117,21 @@ public class PanelMisVentas extends JPanel {
         ContraOferta co = contraOfertasVisibles.get(index);
         
         if (co == null) {
-            JOptionPane.showMessageDialog(this, "Seleccione una línea de 'OFERTA RECIBIDA', no el título.");
+            JOptionPane.showMessageDialog(this, "Seleccione una línea que comience con '└── [OFERTA]'.\nNo se puede seleccionar el título de la venta.", "Selección Incorrecta", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         try {
             if (aceptar) {
                 ventana.getSistema().aceptarContraOferta(co);
-                JOptionPane.showMessageDialog(this, "¡Venta realizada con éxito!");
+                JOptionPane.showMessageDialog(this, "¡Oferta aceptada! El tiquete ha sido transferido y el dinero recibido.");
             } else {
                 ventana.getSistema().rechazarContraOferta(co);
                 JOptionPane.showMessageDialog(this, "Contraoferta rechazada.");
             }
-            cargarDatos(); // Recargar
+            cargarDatos();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error al procesar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
