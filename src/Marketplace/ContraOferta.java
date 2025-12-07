@@ -27,8 +27,10 @@ public class ContraOferta implements Serializable {
         // Solo el usuario que creio la oferta puede ver las contraofertas, hace que es el solo que puede acceptar
     	if (this.usarSaldo == true && this.comprador.getSaldoVirtual() < this.nuevoPrecio){
 			throw new SaldoInsuficienteException(this.comprador);
+    	}else if (this.usarSaldo == true) {
+    		this.comprador.setSaldoVirtual(this.comprador.getSaldoVirtual()-this.nuevoPrecio);
     	}
-    	this.comprador.setSaldoVirtual(this.comprador.getSaldoVirtual()-this.nuevoPrecio);
+    	
         this.aceptada = true;
         ofertaOriginal.setVendida(true);
         //transferirTiquete

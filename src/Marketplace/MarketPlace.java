@@ -15,7 +15,6 @@ public class MarketPlace implements Serializable{
         this.log = new LogReventa();
     }
     
-
     public void publicarOferta(Oferta oferta) {
         ofertas.add(oferta);
         log.registrarEvento("Nueva oferta publicada: " + oferta.getDescripcion());

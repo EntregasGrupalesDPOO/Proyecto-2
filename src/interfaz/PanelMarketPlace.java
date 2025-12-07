@@ -100,14 +100,16 @@ public class PanelMarketPlace extends JPanel {
         BoletasMaster sistema = ventana.getSistema();
         
         // Parcourir tous les événements
-        for (Evento evento : sistema.getEventos()) {
+        for (ArrayList<Evento> lista: Administrador.eventosPorOrganizador.values()) {
             // Parcourir toutes les localités de l'événement
-            for (Localidad loc : evento.getLocalidades()) {
-                // Vérifier si le ticket est dans cette localité
-                // Note: On vérifie par ID car l'objet peut être une copie sérialisée différente
-                for (Tiquete t : loc.getTiquetes()) {
-                    if (t.getId() == tiqueteObjetivo.getId()) {
-                        return evento.getNombre() + " @ " + evento.getVenue().getNombre() + " (" + loc.getNombre() + ")";
+            for (Evento evento : lista) {
+            	for (Localidad loc : evento.getLocalidades()) {
+                    // Vérifier si le ticket est dans cette localité
+                    // Note: On vérifie par ID car l'objet peut être une copie sérialisée différente
+                    for (Tiquete t : loc.getTiquetes()) {
+                        if (t.getId() == tiqueteObjetivo.getId()) {
+                            return evento.getNombre() + " @ " + evento.getVenue().getNombre() + " (" + loc.getNombre() + ")";
+                        }
                     }
                 }
             }
@@ -135,23 +137,41 @@ public class PanelMarketPlace extends JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, 
-                "¿Desea comprar este tiquete por $" + seleccionada.getPrecio() + "?\nSe descontará de su saldo virtual.",
-                "Confirmar Compra", JOptionPane.YES_NO_OPTION);
+        // Checkbox para decidir si usa saldo virtual
+        JCheckBox chkUsarSaldo = new JCheckBox("Usar saldo virtual", true); // por defecto marcado
 
-        if (confirm == JOptionPane.YES_OPTION) {
+        Object[] mensaje = {
+            "¿Desea comprar este tiquete por $" + seleccionada.getPrecio() + "?",
+            chkUsarSaldo
+        };
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                mensaje,
+                "Confirmar Compra",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (confirm == JOptionPane.OK_OPTION) {
             try {
                 Cliente yo = (Cliente) ventana.getSistema().getUsuarioActual();
-                
-                // Appel à la logique existante : acceptarOferta
-                // true = usarSaldo (comme demandé dans la console)
-                yo.acceptarOferta(seleccionada, true); 
-                
+
+                boolean usarSaldo = chkUsarSaldo.isSelected();
+
+                // ahora pasamos el valor real de usarSaldo
+                yo.acceptarOferta(seleccionada, usarSaldo);
+
                 JOptionPane.showMessageDialog(this, "¡Compra realizada con éxito! El tiquete es tuyo.");
-                cargarOfertas(); // Rafraîchir la liste (l'offre disparaît car vendue)
-                
+                cargarOfertas(); // refrescar la lista
+
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo comprar: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No se pudo comprar: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         }
     }
@@ -163,18 +183,53 @@ public class PanelMarketPlace extends JPanel {
             return;
         }
 
-        String precioStr = JOptionPane.showInputDialog(this, "El precio actual es $" + seleccionada.getPrecio() + "\nIngrese su contraoferta:");
-        if (precioStr != null && !precioStr.isEmpty()) {
-            try {
-                double nuevoPrecio = Double.parseDouble(precioStr);
-                // Appel à la logique existante
-                ventana.getSistema().hacerContraOferta(seleccionada, nuevoPrecio, true);
-                JOptionPane.showMessageDialog(this, "¡Contraoferta enviada al vendedor!");
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Ingrese un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-            }
+        // Campo de texto para el nuevo precio
+        JTextField txtPrecio = new JTextField(
+            String.valueOf(seleccionada.getPrecio())
+        );
+
+        // CheckBox para decidir si usar saldo virtual
+        JCheckBox chkUsarSaldo = new JCheckBox("Usar saldo virtual");
+        chkUsarSaldo.setSelected(true); // por defecto SÍ usa saldo
+
+        Object[] msg = {
+            "El precio actual es $" + seleccionada.getPrecio() + 
+            "\nIngrese su contraoferta:", 
+            txtPrecio,
+            chkUsarSaldo
+        };
+
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                msg,
+                "Hacer Contraoferta",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (opt != JOptionPane.OK_OPTION) {
+            return; // canceló
+        }
+
+        String precioStr = txtPrecio.getText().trim();
+        if (precioStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            double nuevoPrecio = Double.parseDouble(precioStr);
+            boolean usarSaldo = chkUsarSaldo.isSelected();
+
+            // Ahora pasamos el bool a la lógica
+            ventana.getSistema().hacerContraOferta(seleccionada, nuevoPrecio, usarSaldo);
+
+            JOptionPane.showMessageDialog(this, "¡Contraoferta enviada al vendedor!");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Ingrese un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 }

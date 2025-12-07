@@ -66,10 +66,21 @@ public class Cliente implements Serializable{
 		for (int i = 0; i < cantidad; i++) {
 			Tiquete t = l.obtenerTiqueteDisponible();
 			if (!(t == null)) {
-				log.add(t);
-				tiquetes.put(t.getId(), t);
-				t.setComprado(true);
-				t.setCliente(this);
+				if (t instanceof TiqueteMultiple){
+					t.setComprado(true);
+				    t.setCliente(this);
+					for (Tiquete tiq : ((TiqueteMultiple) t).getTiquetes()) {
+						log.add(tiq);
+						tiquetes.put(tiq.getId(), tiq);
+						tiq.setComprado(true);
+						tiq.setCliente(this);
+					}
+				}else {
+					log.add(t);
+					tiquetes.put(t.getId(), t);
+					t.setComprado(true);
+					t.setCliente(this);
+				}
 			}
 		}
 
@@ -99,7 +110,7 @@ public class Cliente implements Serializable{
 			
 			Tiquete t = l.obtenerTiqueteDisponible(i);
 			if(!(t == null)) {
-				log.add(ti);
+				log.add(t);
 				tiquetes.put(t.getId(), t);
 				t.setComprado(true);
 				t.setCliente(this);
@@ -162,11 +173,12 @@ public class Cliente implements Serializable{
 		if (tiquete.getFecha().isBefore(LocalDate.now())){
 			throw new TiqueteVencidoFecha(tiquete);
 		}
-		eliminarTiquete(tiquete);
-		clientes.get(login).agregarTiquete(tiquete);
-		if (clientes.get(login).equals(null)) {
+		if (clientes.get(login) == (null)) {
 			throw new UsuarioNoEncontradoException(login);
 		}
+		eliminarTiquete(tiquete);
+		clientes.get(login).agregarTiquete(tiquete);
+		
 		tiquete.setCliente(clientes.get(login));
 	}
 	
@@ -176,7 +188,6 @@ public class Cliente implements Serializable{
 			throw new TiqueteNoEncontradoException(tiquete.getId());
 		}
 
-		tiqueteMultiple.getTiquetes().remove(t);
 		transferirTiquete(tiquete, login, contrasena);
 		tiqueteMultiple.setTransferible(false);
 	}
@@ -187,6 +198,7 @@ public class Cliente implements Serializable{
 	}
 	
 	public void eliminarTiquete(Tiquete tiquete) {
+		
 		this.tiquetes.remove(tiquete.getId());
 	}
 	
@@ -194,57 +206,74 @@ public class Cliente implements Serializable{
 		this.saldoVirtual += valor;
 	}
 
-public void acceptarOferta(Oferta oferta, boolean usarSaldo) throws Exception {
-	if (usarSaldo == true && this.saldoVirtual < oferta.getPrecio()){
-		throw new SaldoInsuficienteException(this);
+	public void acceptarOferta(Oferta oferta, boolean usarSaldo) throws Exception {
+		if (usarSaldo == true && this.saldoVirtual < oferta.getPrecio()){
+			throw new SaldoInsuficienteException(this);
+		} else if (usarSaldo == true) {
+			this.setSaldoVirtual(this.getSaldoVirtual()-oferta.getPrecio());
+		}
+	    oferta.setVendida(true);
+	    //transferirTiquete
+	    Cliente vendedorOferta= oferta.getVendedor();
+	    vendedorOferta.setSaldoVirtual(vendedorOferta.getSaldoVirtual()+oferta.getPrecio());
+	    vendedorOferta.transferirTiquete(oferta.getTiquete(),this.login, oferta.getVendedor().getContrasena() );
+	    
 	}
-	this.setSaldoVirtual(this.getSaldoVirtual()-oferta.getPrecio());
-    oferta.setVendida(true);
-    //transferirTiquete
-    Cliente vendedorOferta= oferta.getVendedor();
-    vendedorOferta.setSaldoVirtual(vendedorOferta.getSaldoVirtual()+oferta.getPrecio());
-    vendedorOferta.transferirTiquete(oferta.getTiquete(),this.login, oferta.getVendedor().getContrasena() );
-    
-}
-
-public String getLogin() {
-	return login;
-}
-
-
-
-public void setLogin(String login) {
-	this.login = login;
-}
-
-
-
-public String getContrasena() {
-	return contrasena;
-}
-
-
-
-public void setContrasena(String contrasena) {
-	this.contrasena = contrasena;
-}
-
-
-
-public double getSaldoVirtual() {
-	return this.saldoVirtual;
-}
-
-public void setSaldoVirtual(double saldo) {
-	this.saldoVirtual=saldo;
-}
-public HashMap<Integer, Tiquete> getTiquetes() {
-	return tiquetes;
-}
-
-public void setTiquetes(HashMap<Integer, Tiquete> tiquetes) {
-	this.tiquetes = tiquetes;
-}
-
+	
+	public String getLogin() {
+		return login;
+	}
+	
+	
+	
+	public void setLogin(String login) {
+		this.login = login;
+	}
+	
+	
+	
+	public String getContrasena() {
+		return contrasena;
+	}
+	
+	
+	
+	public void setContrasena(String contrasena) {
+		this.contrasena = contrasena;
+	}
+	
+	
+	
+	public double getSaldoVirtual() {
+		return this.saldoVirtual;
+	}
+	
+	public void setSaldoVirtual(double saldo) {
+		this.saldoVirtual=saldo;
+	}
+	public HashMap<Integer, Tiquete> getTiquetes() {
+		return tiquetes;
+	}
+	
+	public void setTiquetes(HashMap<Integer, Tiquete> tiquetes) {
+		this.tiquetes = tiquetes;
+	}
+	
+	public static void setClientes(HashMap<String, Cliente> clientes) {
+		Cliente.clientes = clientes;
+	}
+	
+	public TiqueteMultiple buscarTiqueteMultiple(Tiquete t) {
+		for (Tiquete ti : this.tiquetes.values()) {
+			if (ti instanceof TiqueteMultiple) {
+				for (Tiquete tiq: ((TiqueteMultiple) ti).getTiquetes()) {
+					if (t.getId() == tiq.getId()) {
+						return (TiqueteMultiple) ti;
+					}
+				}
+			}
+		}
+		return null;
+	}
 }
 

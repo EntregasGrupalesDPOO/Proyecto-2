@@ -60,12 +60,13 @@ public class PanelMisVentas extends JPanel {
 
 
     private String buscarInfoEvento(Tiquete tiqueteBuscado) {
-        BoletasMaster sistema = ventana.getSistema();
-        for (Evento e : sistema.getEventos()) {
-            for (Localidad l : e.getLocalidades()) {
-                for (Tiquete t : l.getTiquetes()) {
-                    if (t.getId() == tiqueteBuscado.getId()) {
-                        return e.getNombre() + " (" + l.getNombre() + ")";
+        for (ArrayList<Evento> lista: Administrador.eventosPorOrganizador.values()) {
+            for (Evento e : lista) {
+            	for (Localidad l : e.getLocalidades()) {
+                    for (Tiquete t : l.getTiquetes()) {
+                        if (t.getId() == tiqueteBuscado.getId()) {
+                            return e.getNombre() + " (" + l.getNombre() + ")";
+                        }
                     }
                 }
             }

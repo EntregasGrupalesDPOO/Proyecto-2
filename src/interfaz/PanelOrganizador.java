@@ -8,6 +8,8 @@ import java.time.format.DateTimeParseException;
 import logica.Evento;
 import logica.Organizador;
 import logica.Venue;
+import java.util.List;
+import logica.Localidad;
 
 public class PanelOrganizador extends JPanel {
     private VentanaPrincipal ventana;
@@ -50,25 +52,26 @@ public class PanelOrganizador extends JPanel {
         JButton btnProponerVenue = new JButton("Proponer Nuevo Venue");
         JButton btnCrearLocalidad = new JButton("Añadir Localidad");
         JButton btnEstadisticas = new JButton("Ver Mis Ganancias");
-        JButton btnComprar = new JButton("Comprar Tiquetes");
         JButton btnLogout = new JButton("Cerrar Sesión");
+        JButton btnCancelarEvento = new JButton("Solicitar Cancelación");
+
 
         panelBotones.add(btnCrearEvento);
         panelBotones.add(btnProponerVenue);
         panelBotones.add(btnCrearLocalidad);
         panelBotones.add(btnEstadisticas);
-        panelBotones.add(btnComprar);
+        panelBotones.add(btnCancelarEvento);
         panelBotones.add(btnLogout);
         
         add(panelBotones, BorderLayout.SOUTH);
 
         // --- ACCIONES ---
         btnLogout.addActionListener(e -> ventana.cerrarSesion());
-        btnComprar.addActionListener(e -> new DialogoCompra(ventana, ventana.getSistema()).setVisible(true));
         btnCrearEvento.addActionListener(e -> crearEvento());
         btnProponerVenue.addActionListener(e -> proponerVenue());
         btnCrearLocalidad.addActionListener(e -> crearLocalidad());
         btnEstadisticas.addActionListener(e -> verGanancias());
+        btnCancelarEvento.addActionListener(e -> solicitarCancelacionEvento());
     }
 
     private void cargarEventos() {
@@ -83,14 +86,14 @@ public class PanelOrganizador extends JPanel {
 
     // --- MODIFICACIÓN AQUÍ: Adición de campos Fecha y Hora ---
     private void crearEvento() {
-        if (ventana.getSistema().getVenues().isEmpty()) {
+        if (Venue.venues.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No hay Venues disponibles.\nProponga uno nuevo y espere a que el Admin lo apruebe.");
             return;
         }
         
         // Selección del Venue
         JComboBox<Venue> comboVenues = new JComboBox<>();
-        for (Venue v : ventana.getSistema().getVenues()) {
+        for (Venue v : Venue.venues.values()) {
             comboVenues.addItem(v);
         }
         comboVenues.setRenderer(new DefaultListCellRenderer() {
@@ -134,10 +137,7 @@ public class PanelOrganizador extends JPanel {
                 LocalDate fecha = LocalDate.parse(fechaStr);
                 LocalTime hora = LocalTime.parse(horaStr);
 
-                ventana.getSistema().agendarEvento(nombre, desc, v, 
-                        (Organizador)ventana.getSistema().getUsuarioActual(), 
-                        tipo, fecha, hora);
-                
+                ((Organizador) ventana.getSistema().getUsuarioActual()).crearEvento(nombre, desc, v, tipo, fecha, hora);
                 JOptionPane.showMessageDialog(this, "¡Evento Creado Exitosamente!");
                 cargarEventos();
                 
@@ -187,36 +187,330 @@ public class PanelOrganizador extends JPanel {
             JOptionPane.showMessageDialog(this, "Seleccione un evento de la lista primero.");
             return;
         }
-        
+
         JTextField txtNombre = new JTextField();
         JTextField txtPrecio = new JTextField();
         JTextField txtCapacidad = new JTextField();
+
+        // NUEVO: tipo de tiquete
+        JComboBox<String> comboTipoTiquete = new JComboBox<>(new String[] {
+            "BASICO", "ENUMERADO", "MULTIPLE"
+        });
+
+        // NUEVO: número de sub-tiquetes si es múltiple
+        JSpinner spinnerNumSubTiquetes = new JSpinner(
+            new SpinnerNumberModel(2, 1, 100, 1)
+        );
+        spinnerNumSubTiquetes.setEnabled(false);  // solo se habilita si el tipo es MULTIPLE
+
+        comboTipoTiquete.addActionListener(e -> {
+            String seleccionado = (String) comboTipoTiquete.getSelectedItem();
+            boolean esMultiple = "MULTIPLE".equals(seleccionado);
+            spinnerNumSubTiquetes.setEnabled(esMultiple);
+        });
         
+        JTextField txtDescuento = new JTextField(); // porcentaje, opcional
+
+
         Object[] message = {
             "Nombre Localidad (Ej: VIP):", txtNombre,
             "Precio:", txtPrecio,
-            "Capacidad:", txtCapacidad
+            "Capacidad:", txtCapacidad,
+            "Tipo de tiquete (BASICO, ENUMERADO, MULTIPLE):", comboTipoTiquete,
+            "N° de tiquetes que contiene cada tiquete múltiple (solo MULTIPLE):", spinnerNumSubTiquetes,
+            "Descuento (% opcional):", txtDescuento
         };
 
-        int option = JOptionPane.showConfirmDialog(this, message, "Añadir Localidad a " + evento.getNombre(), JOptionPane.OK_CANCEL_OPTION);
+        int option = JOptionPane.showConfirmDialog(
+            this,
+            message,
+            "Añadir Localidad a " + evento.getNombre(),
+            JOptionPane.OK_CANCEL_OPTION
+        );
 
         if (option == JOptionPane.OK_OPTION) {
             try {
-                String nombreLoc = txtNombre.getText();
-                double precio = Double.parseDouble(txtPrecio.getText());
-                int cap = Integer.parseInt(txtCapacidad.getText());
+                String nombreLoc = txtNombre.getText().trim();
+                double precio = Double.parseDouble(txtPrecio.getText().trim());
+                int cap = Integer.parseInt(txtCapacidad.getText().trim());
+                String tipoTiquete = (String) comboTipoTiquete.getSelectedItem();
+
+                // Valor para MULTIPLE (por ahora solo lo leemos; tú lo usarás en la lógica)
+                double descuento = 0.0;
+                String descStr = txtDescuento.getText().trim();
+                if (!descStr.isEmpty()) {
+                    descuento = Double.parseDouble(descStr); 
+                }
+                int numSubTiquetes;
+
+                if ("MULTIPLE".equals(tipoTiquete)) {
+                    numSubTiquetes = (Integer) spinnerNumSubTiquetes.getValue();
+                    ((Organizador) ventana.getSistema().getUsuarioActual()).anadirLocalidadAEvento(nombreLoc, cap, precio, tipoTiquete, evento, descuento/100, numSubTiquetes);
+                } else {
+                	((Organizador) ventana.getSistema().getUsuarioActual()).anadirLocalidadAEvento(nombreLoc, cap, precio, tipoTiquete, evento, descuento/100);
+
+                }
                 
-                // Asume tipo de tiquete "BASICO"
-                ventana.getSistema().crearLocalidadEvento(nombreLoc, cap, precio, "BASICO", evento);
+
                 JOptionPane.showMessageDialog(this, "¡Localidad creada!");
+            } catch (NumberFormatException exNum) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Error (verifique que precio y capacidad sean números válidos).",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error (Verifique números): " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         }
     }
     
     private void verGanancias() {
         Organizador org = (Organizador) ventana.getSistema().getUsuarioActual();
-        JOptionPane.showMessageDialog(this, "Mis Ganancias Globales: $" + org.consultarGananciasGlobales());
+
+        String[] opciones = {
+            "Ganancias globales",
+            "Ganancias por evento",
+            "Ganancias por localidad",
+            "Porcentaje global de venta",
+            "Porcentaje de venta por evento",
+            "Porcentaje de venta por localidad"
+        };
+
+        int seleccion = JOptionPane.showOptionDialog(
+                this,
+                "¿Qué desea consultar?",
+                "Mis Ganancias / Porcentajes",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]
+        );
+
+        if (seleccion == JOptionPane.CLOSED_OPTION || seleccion < 0) {
+            return;
+        }
+
+        try {
+            switch (seleccion) {
+                // 0) Ganancias globales
+                case 0: {
+                    double g = org.consultarGananciasGlobales();
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Ganancias globales: $" + g
+                    );
+                    break;
+                }
+
+                // 1) Ganancias por evento
+                case 1: {
+                    Evento eSel = seleccionarEvento(org);
+                    if (eSel == null) return;
+
+                    double g = org.consultarGananciasEvento(eSel);
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Ganancias del evento \"" + eSel.getNombre() + "\": $" + g
+                    );
+                    break;
+                }
+
+                // 2) Ganancias por localidad
+                case 2: {
+                    Evento eSel = seleccionarEvento(org);
+                    if (eSel == null) return;
+
+                    Localidad locSel = seleccionarLocalidad(eSel);
+                    if (locSel == null) return;
+
+                    double g = org.consultarGananciasLocalidad(locSel);
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Ganancias de la localidad \"" + locSel.getNombre() +
+                            "\" del evento \"" + eSel.getNombre() + "\": $" + g
+                    );
+                    break;
+                }
+
+                // 3) Porcentaje global de venta
+                case 3: {
+                    double p = org.consultarPorcentajeGlobales();
+                    if (Double.isNaN(p) || Double.isInfinite(p)) p = 0.0;
+                    JOptionPane.showMessageDialog(
+                            this,
+                            String.format("Porcentaje global de venta: %.2f %%", p * 100)
+                    );
+                    break;
+                }
+
+                // 4) Porcentaje de venta por evento
+                case 4: {
+                    Evento eSel = seleccionarEvento(org);
+                    if (eSel == null) return;
+
+                    double p = org.consultarPorcentajeEvento(eSel);
+                    if (Double.isNaN(p) || Double.isInfinite(p)) p = 0.0;
+                    JOptionPane.showMessageDialog(
+                            this,
+                            String.format(
+                                    "Porcentaje de venta del evento \"%s\": %.2f %%",
+                                    eSel.getNombre(), p * 100
+                            )
+                    );
+                    break;
+                }
+
+                // 5) Porcentaje de venta por localidad
+                case 5: {
+                    Evento eSel = seleccionarEvento(org);
+                    if (eSel == null) return;
+
+                    Localidad locSel = seleccionarLocalidad(eSel);
+                    if (locSel == null) return;
+
+                    double p = org.consultarPorcentajeLocalidad(locSel);
+                    if (Double.isNaN(p) || Double.isInfinite(p)) p = 0.0;
+                    JOptionPane.showMessageDialog(
+                            this,
+                            String.format(
+                                    "Porcentaje de venta de la localidad \"%s\" del evento \"%s\": %.2f %%",
+                                    locSel.getNombre(), eSel.getNombre(), p * 100
+                            )
+                    );
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al consultar: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+        
+        
     }
+ // Permite elegir un evento del organizador (usa la lista interna y la selección actual del JList)
+    private Evento seleccionarEvento(Organizador org) {
+        List<Evento> eventos = org.getEventosCreados(); 
+        if (eventos == null || eventos.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No tienes eventos creados.");
+            return null;
+        }
+
+        Evento seleccionadoEnLista = listaEventosPropios.getSelectedValue();
+
+        JComboBox<Evento> comboEventos =
+                new JComboBox<>(eventos.toArray(new Evento[0]));
+
+        if (seleccionadoEnLista != null) {
+            comboEventos.setSelectedItem(seleccionadoEnLista);
+        }
+
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                comboEventos,
+                "Seleccione el evento",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (opt != JOptionPane.OK_OPTION) {
+            return null;
+        }
+
+        return (Evento) comboEventos.getSelectedItem();
+    }
+
+    // Permite elegir una localidad de un evento
+    private Localidad seleccionarLocalidad(Evento evento) {
+        java.util.List<Localidad> locs = evento.getLocalidades();
+        if (locs == null || locs.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "El evento seleccionado no tiene localidades.");
+            return null;
+        }
+
+        JComboBox<Localidad> comboLocs =
+                new JComboBox<>(locs.toArray(new Localidad[0]));
+
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                comboLocs,
+                "Seleccione la localidad",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (opt != JOptionPane.OK_OPTION) {
+            return null;
+        }
+
+        return (Localidad) comboLocs.getSelectedItem();
+    }
+    
+    private void solicitarCancelacionEvento() {
+        Organizador org = (Organizador) ventana.getSistema().getUsuarioActual();
+
+        // Intentamos usar el evento seleccionado en la lista
+        Evento evento = listaEventosPropios.getSelectedValue();
+
+        if (evento == null) {
+            // Si no hay seleccionado, dejamos que elija con el mismo helper de antes
+            evento = seleccionarEvento(org);
+        }
+
+        if (evento == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Debe seleccionar un evento para solicitar su cancelación.");
+            return;
+        }
+
+        // Cuadro para escribir la razón
+        JTextArea txtRazon = new JTextArea(5, 30);
+        txtRazon.setLineWrap(true);
+        txtRazon.setWrapStyleWord(true);
+        JScrollPane scroll = new JScrollPane(txtRazon);
+
+        Object[] mensaje = {
+            "Explique la razón de la cancelación:", scroll
+        };
+
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                mensaje,
+                "Solicitar cancelación de \"" + evento.getNombre() + "\"",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (opt != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        String razon = txtRazon.getText().trim();
+        if (razon.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Debe escribir una razón para la cancelación.");
+            return;
+        }
+
+        try {
+            ventana.getSistema().solicitarCancelacionEvento(evento, razon);
+            JOptionPane.showMessageDialog(this,
+                    "Solicitud de cancelación enviada al administrador.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al solicitar cancelación: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
 }

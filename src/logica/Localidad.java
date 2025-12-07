@@ -113,4 +113,10 @@ public class Localidad implements Serializable{
 		}
 		return tiquetesDisponibles;
 	}
+	
+	@Override
+	public String toString() {
+	    return this.nombre;
+	}
+
 }

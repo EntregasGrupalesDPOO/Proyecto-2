@@ -9,8 +9,8 @@ import java.util.HashMap;
 import Exepciones.OrganizadorNoTieneEventosException;
 
 public class Administrador implements Serializable {
-	private HashMap<LocalDate, ArrayList<Evento>> eventosPorFecha;
-	private HashMap<Organizador, ArrayList<Evento>> eventosPorOrganizador;
+	public static HashMap<LocalDate, ArrayList<Evento>> eventosPorFecha;
+	public static HashMap<Organizador, ArrayList<Evento>> eventosPorOrganizador;
 	private ArrayList<Solicitud> solicitudes;
 	private String login;
 	private String contrasena;
@@ -19,7 +19,7 @@ public class Administrador implements Serializable {
 		this.login = login;
 		this.contrasena = contrasena;
 		this.eventosPorFecha = new HashMap<LocalDate, ArrayList<Evento>>();
-		this.eventosPorOrganizador = new HashMap<Organizador, ArrayList<Evento>>();
+		eventosPorOrganizador = new HashMap<Organizador, ArrayList<Evento>>();
 		this.solicitudes = new ArrayList<Solicitud>();
 	}
 	// Método para autenticar al administrador
@@ -111,7 +111,13 @@ public class Administrador implements Serializable {
 		for (Localidad l: evento.getLocalidades()) {
 			for (Tiquete t: l.getTiquetes()) {
 				if (t.isComprado()) {
-					reembolsarTiqueteCancelacionEvento(t.getCliente(), t);
+					if (t instanceof TiqueteMultiple) {
+						for (Tiquete ti : ((TiqueteMultiple) t).getTiquetes()) {
+							reembolsarTiqueteCancelacionEvento(ti.getCliente(), ti);
+						}
+					}else {
+						reembolsarTiqueteCancelacionEvento(t.getCliente(), t);
+					}
 				}
 			}
 		}
@@ -122,15 +128,22 @@ public class Administrador implements Serializable {
 		for (Localidad l: evento.getLocalidades()) {
 			for (Tiquete t: l.getTiquetes()) {
 				if (t.isComprado()) {
-					reembolsarTiqueteCancelacionEventoInsolvencia(t.getCliente(), t);
+					if (t instanceof TiqueteMultiple) {
+						for (Tiquete ti : ((TiqueteMultiple) t).getTiquetes()) {
+							reembolsarTiqueteCancelacionEventoInsolvencia(ti.getCliente(), ti);
+						}
+					}
+					else{
+						reembolsarTiqueteCancelacionEventoInsolvencia(t.getCliente(), t);
+					}
 				}
 			}
 		}
 	}
 	
 	public void añadirEvento(Evento evento) {
-		if(this.eventosPorFecha.containsKey(evento.getFecha())) {
-			ArrayList<Evento> lista = this.eventosPorFecha.get(evento.getFecha());
+		if(eventosPorFecha.containsKey(evento.getFecha())) {
+			ArrayList<Evento> lista = eventosPorFecha.get(evento.getFecha());
 			if (lista.equals(null)) {
 				lista = new ArrayList<Evento>();
 			}
@@ -138,19 +151,19 @@ public class Administrador implements Serializable {
 		}else {
 			ArrayList<Evento> lista = new ArrayList<Evento>();
 			lista.add(evento);
-			this.eventosPorFecha.put(evento.getFecha(), lista);
+			eventosPorFecha.put(evento.getFecha(), lista);
 		}
 		
-		if(this.eventosPorOrganizador.containsKey(evento.getOrganizador())) {
-			ArrayList<Evento> lista = this.eventosPorOrganizador.get(evento.getOrganizador());
-			if (lista.equals(null)) {
+		if(eventosPorOrganizador.containsKey(evento.getOrganizador())) {
+			ArrayList<Evento> lista = eventosPorOrganizador.get(evento.getOrganizador());
+			if (lista == null) {
 				lista = new ArrayList<Evento>();
 			}
 			lista.add(evento);
 		}else {
 			ArrayList<Evento> lista = new ArrayList<Evento>();
 			lista.add(evento);
-			this.eventosPorOrganizador.put(evento.getOrganizador(), lista);
+			eventosPorOrganizador.put(evento.getOrganizador(), lista);
 		}
 		
 	}
@@ -175,7 +188,7 @@ public class Administrador implements Serializable {
 		this.contrasena = contrasena;
 	}
 
-	public HashMap<LocalDate, ArrayList<Evento>> getEventosPorFecha() {
+	public static HashMap<LocalDate, ArrayList<Evento>> getEventosPorFecha() {
 		return eventosPorFecha;
 	}
 
@@ -210,6 +223,11 @@ public class Administrador implements Serializable {
 		Tiquete.setTiquetesMaximosPorTransaccion(tiquetesIndividuales);
 		TiqueteMultiple.setTiquetesMaximosPorTransaccion(tiquetesMultiples);
 	}
-	
+	public static void setEventosPorFecha(HashMap<LocalDate, ArrayList<Evento>> eventosPorFecha) {
+		Administrador.eventosPorFecha = eventosPorFecha;
+	}
+	public static void setEventosPorOrganizador(HashMap<Organizador, ArrayList<Evento>> eventosPorOrganizador) {
+		Administrador.eventosPorOrganizador = eventosPorOrganizador;
+	}
 	
 }
