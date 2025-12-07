@@ -107,4 +107,9 @@ public class Evento implements Serializable{
 	public String getTipoDeEvento() {
 		return this.tipoDeEvento;
 	}
+	
+	@Override
+	public String toString() {
+	    return this.nombre;  
+	}
 }

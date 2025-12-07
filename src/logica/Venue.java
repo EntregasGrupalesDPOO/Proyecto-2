@@ -11,6 +11,7 @@ public class Venue implements Serializable{
 	public int capacidad;
 	public String nombre;
 	public String ubicacion;
+	public static HashMap<String, Venue> venues = new HashMap<String, Venue>();
 	
 	
 	public Venue(int capacidad, String nombre, String ubicacion) {
@@ -19,6 +20,7 @@ public class Venue implements Serializable{
 		this.ubicacion = ubicacion;
 		this.eventos = new HashMap<LocalDate, Evento>();
 		this.restricciones = new ArrayList<String>();
+		venues.put(nombre, this);
 	}
 
 
@@ -79,4 +81,10 @@ public class Venue implements Serializable{
 	public void anadirRestricciones(String restriccion) {
 		this.restricciones.add(restriccion);
 	}
+
+
+	public static void setVenues(HashMap<String, Venue> venues) {
+		Venue.venues = venues;
+	}
+	
 }

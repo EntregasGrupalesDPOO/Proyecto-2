@@ -3,6 +3,7 @@ package interfaz;
 import javax.swing.*;
 import java.awt.*;
 import logica.BoletasMaster;
+import logica.Venue;
 
 public class VentanaPrincipal extends JFrame {
     
@@ -45,7 +46,6 @@ public class VentanaPrincipal extends JFrame {
             sistema.escribirClientes();
             sistema.escribirOrganizadores();
             sistema.escribirEventos();
-            sistema.escribirTiquetes();
             sistema.escribirVenues();
             sistema.escribirMarketplace();
             System.out.println("Datos guardados en disco.");
@@ -81,11 +81,10 @@ public class VentanaPrincipal extends JFrame {
         sistema.leerClientes();
         sistema.leerOrganizadores();
         sistema.leerEventos();
-        sistema.leerTiquetes();
         sistema.leerVenues();
         sistema.leerMarketplace(); 
 
-        // Si después de cargar, no hay administrador (porque borraste los archivos), creamos uno.
+        // Si después de cargar, no hay administrador creamos uno.
         if (sistema.getAdministrador() == null) {
             sistema.agregarAdministrador("admin", "admin");
             

@@ -13,12 +13,14 @@ public class  Organizador extends Cliente implements Serializable{
 	private ArrayList<Evento> eventos;
 	private Administrador administrador;
 	private final static String ORGANIZADOR = "ORGANIZADOR";
+	public static HashMap<String, Organizador> organizadores = new HashMap<String, Organizador>();
 	
 	public Organizador(String login, String contrasena, Administrador administrador) {
 		super(login, contrasena);
 		this.tipoCliente = ORGANIZADOR;
 		this.eventos = new ArrayList<Evento>();
 		this.administrador = administrador;
+		organizadores.put(login, this);
 	}
 	
 	public Evento crearEvento(String nombre,String descripcion,Venue venue, String tipoDeEvento, LocalDate fecha, LocalTime hora) throws Exception {
@@ -45,7 +47,9 @@ public class  Organizador extends Cliente implements Serializable{
 		if(evento.capacidadActual() + capacidad > evento.getVenue().getCapacidad()) {
 			throw new CapacidadVenueExcedidaException(capacidad);
 		}
+
 		Localidad localidad = new Localidad(nombre, capacidad, precioTiquete, tipoTiquete, evento, descuento);
+
 		return localidad;
 	}
 	
@@ -179,5 +183,13 @@ public class  Organizador extends Cliente implements Serializable{
 		return this.eventos;
 	}
 
+	public static void setOrganizadores(HashMap<String, Organizador> organizadores) {
+		Organizador.organizadores = organizadores;
+	}
+	
+	@Override
+	public String toString() {
+	    return this.login;  
+	}
 }
 

@@ -2,12 +2,14 @@ package interfaz;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import logica.BoletasMaster;
+import java.util.ArrayList;
+
+import logica.Administrador;
 import logica.Cliente;
 import logica.Evento;
 import logica.Localidad;
 import logica.Tiquete;
+import logica.TiqueteMultiple;
 
 public class PanelCliente extends JPanel {
     private VentanaPrincipal ventana;
@@ -59,11 +61,10 @@ public class PanelCliente extends JPanel {
         JLabel lblTitulo = new JLabel("Mis Tiquetes:");
         lblTitulo.setFont(Estilos.FUENTE_TITULO);
         
-        // Etiqueta de Saldo (Nuevo)
-        lblSaldo = new JLabel("Saldo: $0.0");
+        lblSaldo = new JLabel();
+        actualizarSaldoVisual();
         lblSaldo.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblSaldo.setForeground(new Color(0, 100, 0)); // Verde oscuro
-        actualizarSaldoVisual(); // Carga inicial
 
         panelTop.add(lblTitulo, BorderLayout.WEST);
         panelTop.add(lblSaldo, BorderLayout.EAST);
@@ -81,11 +82,11 @@ public class PanelCliente extends JPanel {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Tiquete) {
                     Tiquete t = (Tiquete) value;
-                    // Buscamos el nombre del evento para mostrarlo en la lista también
                     String nombreEvento = buscarNombreEvento(t);
-                    
-                    String estado = t.isImpreso() ? "<font color='red'>[IMPRESO]</font>" : "<font color='green'>[DISPONIBLE]</font>";
-                    setText("<html><b>" + nombreEvento + "</b> (ID: " + t.getId() + ") | " + t.getFecha() + " | " + estado + "</html>");
+                    String estado = t.isImpreso() ? "<font color='red'>[IMPRESO]</font>"
+                                                  : "<font color='green'>[DISPONIBLE]</font>";
+                    setText("<html><b>" + nombreEvento + "</b> (ID: " + t.getId() + ") | "
+                            + t.getFecha() + " | " + estado + "</html>");
                     setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
                 }
                 return this;
@@ -95,12 +96,9 @@ public class PanelCliente extends JPanel {
         panel.add(new JScrollPane(listaTiquetes), BorderLayout.CENTER);
 
         // --- BOTONES DE ACCIÓN ---
-        JPanel panelBotones = new JPanel(new GridLayout(1, 4, 10, 0)); // 4 botones ahora
+        JPanel panelBotones = new JPanel(new GridLayout(1, 5, 10, 0));
         panelBotones.setBackground(Estilos.COLOR_FONDO);
         panelBotones.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JButton btnRecargar = new JButton("Recargar Saldo"); // Nuevo Botón
-        Estilos.estilizarBoton(btnRecargar, new Color(40, 167, 69)); // Verde
 
         JButton btnComprarOficial = new JButton("Comprar Oficial");
         Estilos.estilizarBoton(btnComprarOficial, Estilos.COLOR_PRIMARIO);
@@ -110,60 +108,93 @@ public class PanelCliente extends JPanel {
 
         JButton btnVender = new JButton("Vender (Marketplace)");
         Estilos.estilizarBoton(btnVender, new Color(100, 100, 100));
+        
+        JButton btnTransferir = new JButton("Transferir");
+        Estilos.estilizarBoton(btnTransferir, new Color(180, 120, 0)); 
 
-        panelBotones.add(btnRecargar);
+        // 🔹 NUEVO: Botón solicitar reembolso
+        JButton btnReembolso = new JButton("Solicitar reembolso");
+        Estilos.estilizarBoton(btnReembolso, new Color(150, 0, 0));
+
         panelBotones.add(btnComprarOficial);
         panelBotones.add(btnImprimir);
         panelBotones.add(btnVender);
+        panelBotones.add(btnTransferir);
+        panelBotones.add(btnReembolso);
 
         panel.add(panelBotones, BorderLayout.SOUTH);
 
         // --- ACCIONES ---
-        
-        // 1. Recargar Saldo
-        btnRecargar.addActionListener(e -> {
-            String montoStr = JOptionPane.showInputDialog(this, "Ingrese monto a recargar:");
-            if (montoStr != null) {
-                try {
-                    double monto = Double.parseDouble(montoStr);
-                    if (monto <= 0) throw new NumberFormatException();
-                    
-                    Cliente c = (Cliente) ventana.getSistema().getUsuarioActual();
-                    c.actualizarSaldoVirtual(monto); // Método existente en Cliente
-                    
-                    actualizarSaldoVisual();
-                    JOptionPane.showMessageDialog(this, "Saldo actualizado correctamente.");
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Monto inválido.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
-        // 2. Comprar
         btnComprarOficial.addActionListener(e -> {
             new DialogoCompra(ventana, ventana.getSistema()).setVisible(true);
             cargarTiquetes();
-            actualizarSaldoVisual(); // Actualizar saldo tras la compra
+            actualizarSaldoVisual();
         });
 
-        // 3. Imprimir
         btnImprimir.addActionListener(e -> {
             Tiquete t = listaTiquetes.getSelectedValue();
-            if (t == null) { JOptionPane.showMessageDialog(this, "Seleccione un tiquete."); return; }
+            if (t == null) { 
+                JOptionPane.showMessageDialog(this, "Seleccione un tiquete."); 
+                return; 
+            }
             imprimirTiquete(t);
         });
 
-        // 4. Vender
         btnVender.addActionListener(e -> {
             Tiquete t = listaTiquetes.getSelectedValue();
-            if (t == null) { JOptionPane.showMessageDialog(this, "Seleccione un tiquete para vender."); return; }
+            if (t == null) { 
+                JOptionPane.showMessageDialog(this, "Seleccione un tiquete para vender."); 
+                return; 
+            }
             publicarEnMarketplace(t);
+        });
+        
+        btnTransferir.addActionListener(e -> {
+            Tiquete t = listaTiquetes.getSelectedValue();
+            if (t == null) {
+                JOptionPane.showMessageDialog(this, "Seleccione un tiquete para transferir.");
+                return;
+            }
+            abrirDialogoTransferencia(t);
+        });
+
+        // 🔹 ACCIÓN NUEVA: Solicitar reembolso por calamidad
+        btnReembolso.addActionListener(e -> {
+            Tiquete t = listaTiquetes.getSelectedValue();
+            if (t == null) {
+                JOptionPane.showMessageDialog(this, "Seleccione un tiquete para solicitar reembolso.");
+                return;
+            }
+
+            String razon = JOptionPane.showInputDialog(
+                    this,
+                    "Explique la razón de la calamidad:",
+                    "Solicitud de reembolso",
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (razon == null) return; // canceló
+            razon = razon.trim();
+            if (razon.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debe escribir una razón para la solicitud.");
+                return;
+            }
+
+            try {
+                ventana.getSistema().solicitarReembolso(t, razon);
+                JOptionPane.showMessageDialog(this, 
+                        "Solicitud de reembolso enviada al administrador.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Error al solicitar reembolso: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         return panel;
     }
 
-    // Método auxiliar para actualizar la etiqueta de saldo
     private void actualizarSaldoVisual() {
         if (lblSaldo != null) {
             Cliente c = (Cliente) ventana.getSistema().getUsuarioActual();
@@ -171,14 +202,22 @@ public class PanelCliente extends JPanel {
         }
     }
 
-    // Método para buscar el nombre del evento (ya que Tiquete no lo tiene directamente)
     private String buscarNombreEvento(Tiquete tiqueteBuscado) {
-        BoletasMaster sistema = ventana.getSistema();
-        for (Evento e : sistema.getEventos()) {
-            for (Localidad l : e.getLocalidades()) {
-                for (Tiquete t : l.getTiquetes()) {
-                    if (t.getId() == tiqueteBuscado.getId()) {
-                        return e.getNombre();
+        for (ArrayList<Evento> lista: Administrador.eventosPorOrganizador.values()) {
+            for (Evento e : lista) {
+                for (Localidad l : e.getLocalidades()) {
+                    for (Tiquete t : l.getTiquetes()) {
+                        if (t instanceof TiqueteMultiple) {
+                            for (Tiquete ti:((TiqueteMultiple) t).getTiquetes()) {
+                                if (ti.getId() == tiqueteBuscado.getId()) {
+                                    return e.getNombre();
+                                }
+                            }
+                        } else {
+                            if (t.getId() == tiqueteBuscado.getId()) {
+                                return e.getNombre();
+                            }
+                        }
                     }
                 }
             }
@@ -191,7 +230,13 @@ public class PanelCliente extends JPanel {
         Cliente cliente = (Cliente) ventana.getSistema().getUsuarioActual();
         if (cliente.getTiquetes() != null) {
             for (Tiquete t : cliente.getTiquetes().values()) {
-                modeloLista.addElement(t);
+                if (t instanceof TiqueteMultiple) {
+                    for (Tiquete ti:((TiqueteMultiple) t).getTiquetes()) {
+                        modeloLista.addElement(ti);
+                    }
+                } else {
+                    modeloLista.addElement(t);
+                }
             }
         }
     }
@@ -203,17 +248,11 @@ public class PanelCliente extends JPanel {
         }
         
         t.marcarComoImpreso();
-        
-        // Buscamos el nombre para pasarlo al panel de impresión
-        String nombreEvento = buscarNombreEvento(t);
 
         JDialog dialogo = new JDialog(ventana, "Tiquete Digital", true);
         dialogo.setSize(650, 300);
         dialogo.setLocationRelativeTo(this);
-        
-        // Pasamos el nombre del evento al panel
         dialogo.add(new PanelImpresion(t)); 
-        
         dialogo.setVisible(true);
         listaTiquetes.repaint();
     }
@@ -233,6 +272,50 @@ public class PanelCliente extends JPanel {
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
+        }
+    }
+    
+    private void abrirDialogoTransferencia(Tiquete t) {
+        JTextField txtLoginDestino = new JTextField();
+        JPasswordField txtPassword = new JPasswordField();
+
+        Object[] message = {
+            "Login del destinatario:", txtLoginDestino,
+            "Confirma tu contraseña:", txtPassword
+        };
+
+        int option = JOptionPane.showConfirmDialog(
+                this, message, "Transferir Tiquete", JOptionPane.OK_CANCEL_OPTION);
+
+        if (option != JOptionPane.OK_OPTION) return;
+
+        String loginDestino = txtLoginDestino.getText().trim();
+        String pass = new String(txtPassword.getPassword()).trim();
+
+        if (loginDestino.isEmpty() || pass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Complete todos los campos.");
+            return;
+        }
+
+        try {
+            Cliente cliente = (Cliente) ventana.getSistema().getUsuarioActual();
+            TiqueteMultiple tm = cliente.buscarTiqueteMultiple(t);
+            if (tm == null) {
+                cliente.transferirTiquete(t, loginDestino, pass);
+            } else {
+                cliente.transferirTiquete(tm, t, loginDestino, pass);
+            }
+
+            JOptionPane.showMessageDialog(this, 
+                    "Tiquete transferido correctamente a " + loginDestino);
+
+            cargarTiquetes();
+            listaTiquetes.repaint();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                    "Error al transferir: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
